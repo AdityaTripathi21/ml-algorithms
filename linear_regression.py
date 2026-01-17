@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import numpy as np
 import pandas as pd
 
 df = pd.read_csv('housing.csv') # turn csv into dataframe
