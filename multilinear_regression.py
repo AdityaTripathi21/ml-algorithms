@@ -4,7 +4,6 @@ import torch.optim as optim
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import pandas as pd
-import numpy as np
 
 df = pd.read_csv('housing.csv') # turn csv into dataframe
 
@@ -40,6 +39,19 @@ split = int(0.8 * x.size(0)) # 80% split
 x_train, x_test = x[:split], x[split:]
 y_train, y_test = y[:split], y[split:]
 
+x_mean = x_train.mean(dim=0) # dim=0 is column wise, so x_mean and x_std have shape (d,)
+x_std = x_train.std(dim=0)
+
+
+# standardization because some features are too large, and this causes the loss to be nan
+x_train = (x_train - x_mean) / (x_std + 1e-8)
+x_test  = (x_test  - x_mean) / (x_std + 1e-8)
+
+y_scale = 100000.0
+
+y_train = y_train / y_scale
+y_test  = y_test  / y_scale
+
     
 train_dataset = CustomDataset(x_train, y_train)
 test_dataset = CustomDataset(x_test, y_test)
@@ -58,8 +70,8 @@ test_dataloader = DataLoader(
 )
 
 model = nn.Linear(4,1) # 4 features, 1 output
-loss_function = nn.MSELoss()
-optimizer = optim.SGD(model.parameters(), lr=1e-3)
+loss_function = nn.MSELoss()   
+optimizer = optim.SGD(model.parameters(), lr=1e-3) # SGD with batches
 
 epochs = 100
 
@@ -79,7 +91,27 @@ for epoch in range(epochs):
         total_loss+= loss.item()
 
     avg_loss = total_loss/len(train_dataloader)
-    print(f"Epoch {epoch+1}, Train Loss: ", avg_loss)
+    print(f"Epoch {epoch+1}, Train Loss: {avg_loss}")
+
+print(model.weight.data)    # [1,4] shape because there is only one neuron (4 weights for 4 features)
+print(model.bias.data)      # [1,1] shape because there is only one neuron (1 bias for 1 neuron)
+
+model.eval() # model.eval for testing
+test_loss = 0.0
+
+with torch.no_grad():
+    for x_batch, y_batch in test_dataloader:
+        y_hat = model(x_batch)
+
+        loss = loss_function(y_hat, y_batch)
+        test_loss += loss.item()
+
+    test_loss /= len(test_dataloader) # average batch loss over the entire epoch
+    print("Test Loss:", test_loss)
+    
+    print("RMSE: ", torch.sqrt(torch.tensor(test_loss))) # multiply RMSE by 100k because of scaling/standardization
+    # RMSE ends up being about 0.74, so predictions are on average 74k off, better than with just linear regression
+
 
 
 
