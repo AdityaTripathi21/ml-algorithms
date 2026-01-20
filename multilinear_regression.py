@@ -75,6 +75,7 @@ optimizer = optim.SGD(model.parameters(), lr=1e-3) # SGD with batches
 
 epochs = 100
 
+# training loop
 for epoch in range(epochs):
     model.train()
     total_loss = 0.0
