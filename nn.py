@@ -7,7 +7,7 @@ import pandas as pd
 
 df = pd.read_csv("housing.csv")
 
-x = df.drop(columns=["median_house_value", "ocean_proximity"])  # drop y and numeric column
+x = df.drop(columns=["median_house_value", "ocean_proximity"])  # drop y and categorical column
 y = df[['median_house_value']]
 
 # replace missing values
